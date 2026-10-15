@@ -4,12 +4,13 @@
 ```
 deep-learning/
   ├── gitignore
-  |── libs.py                           # common imports:        from dlkit.libs import *
+  |── libs.py                           
   ├── mnist_learning.ipynb          
   ├── neuron_network.ipnby              
   ├── fashion-mnist.ipynb               
   ├── perception_simple.ipynb           
-  ├── titanic.ipynb                         
+  ├── titanic.ipynb
+  |── victor_hugo.ipynb                       
 ```
 #### libs: shared libraries for the deep learning notebooks
 ##### Use it in a notebook
