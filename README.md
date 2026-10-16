@@ -15,7 +15,7 @@ A collection of 6 hands-on mini projects covering the fundamentals of deep learn
 ├── victor_hugo.ipynb          # Text modelling on Victor Hugo's works
 ├── data/                      # Datasets (see "Datasets" below)
 │   ├── victor-hugo-texts.txt
-│   └── victor-hugo-titles.txt
+│   └── victor-hugo-titles.txt  # poem titles, used to clean the corpus
 └── README.md
 ```
 
@@ -27,9 +27,9 @@ Implementation of the simplest neural unit: weighted sum, activation function an
 **Concepts:** weights and bias, activation function, learning rate, perceptron learning rule.
 
 ### 2. Neural Network (`neuron_network.ipynb`)
-Building a multi-layer neural network and understanding what happens during training.
+Multi-class classification of the **Iris** flowers (3 species, 4 measurements) with a small MLP (4-8-3, 67 parameters), built step by step.
 
-**Concepts:** hidden layers, forward propagation, loss function, backpropagation, gradient descent.
+**Concepts:** stratified train/test split, standardization (scaler fitted on the train set only), one-hot encoding, hidden layers, softmax, categorical cross-entropy, epochs and batch size, confusion matrix, predicting new samples.
 
 ### 3. MNIST (`mnist_learning.ipynb`)
 Classification of handwritten digits (0 to 9) from 28x28 grayscale images.
@@ -42,15 +42,16 @@ A harder drop-in replacement for MNIST: 10 categories of clothing items (t-shirt
 **Concepts:** model comparison with MNIST, overfitting, regularization (dropout), optionally convolutional layers.
 
 ### 5. Titanic (`titanic.ipynb`)
-Predicting passenger survival from tabular data (age, sex, class, fare, etc.).
+Predicting passenger survival from tabular data (age, sex, class, fare, etc.) with a small network: 9 input features after encoding, 27 hidden neurons, 1 sigmoid output.
 
-**Concepts:** data cleaning, missing values, categorical encoding, feature scaling, neural networks on tabular data, train/validation split.
+**Concepts:** missing values (imputation with statistics computed on the train set), one-hot encoding applied identically to train and test, feature scaling, binary cross-entropy, early stopping on the validation loss, 0.5 decision threshold, confusion matrix.
 
 ### 6. Victor Hugo (`victor_hugo.ipynb`)
 Next-word prediction and text generation with a recurrent neural network, trained on a corpus of Victor Hugo's poetry (`victor-hugo-texts.txt`).
 
 **How it works:**
-- **Preprocessing:** each non-empty line of the corpus is read, then tokenized with the Keras `Tokenizer` (vocabulary limited to 1000 words).
+- **Cleaning:** metadata lines (`Victor Hugo: ...`, collection, date), poem titles (listed in `victor-hugo-titles.txt`) and section numbers are removed; apostrophes and quotation marks are normalized; elisions are split (`l'ombre` → `l' ombre`) to get a denser vocabulary. An optional `split_verses` setting cuts lines that contain several verses.
+- **Preprocessing:** each remaining line is tokenized with the Keras `Tokenizer` (vocabulary limited to 1000 words).
 - **Train / validation / test split:** 80 % / 10 % / 10 %, split by **lines** (not by windows) so that overlapping windows from the same line never end up in different sets.
 - **Training examples:** a sliding window of the **3 previous words** is used to predict the next word, with zero padding at the start when fewer than 3 words are available.
 - **Model:** `Embedding` (16 dimensions) → `SimpleRNN` (32 units) → `Dense` (1000, softmax), trained with sparse categorical cross-entropy and Adam. `EarlyStopping` on the **validation loss** (patience 5) stops training and restores the best weights.
@@ -59,7 +60,9 @@ Next-word prediction and text generation with a recurrent neural network, traine
 
 **Concepts:** tokenization, word embeddings, sliding windows, recurrent neural networks, softmax sampling, temperature.
 
-**Example output** (seed "Poème"): the generated text has a poetic vocabulary ("fleurs", "soleil", "âme", "coeurs") but little grammar, which is expected with a simple RNN, a 3-word context and a small corpus.
+**Example output** (seed "Ce siècle avait deux ans", first run): *"... sont il avec un pas l'enfant pitié un bêtes le il a que petit depuis navire son pavé de vont diable ..."*. The vocabulary is poetic but the grammar is loose, which is expected with a simple RNN, a 3-word context and a small corpus.
+
+**Limitations:** the corpus is very small (about 17,000 words, 1,400 lines, with 62 % of the words appearing only once), so a word-level model cannot learn much: Top-1 accuracy stays in the single digits and should be read against the "most frequent word" baseline, and Top-5 and the validation loss are fairer metrics. A character-level model or a larger corpus would give much better results.
 
 ## Datasets
 
@@ -67,11 +70,12 @@ Next-word prediction and text generation with a recurrent neural network, traine
 |---|---|---|
 | MNIST | Handwritten digits | Provided / loaded via Keras |
 | Fashion-MNIST | Clothing images | Provided / loaded via Keras |
-| Titanic | Passenger records (CSV) | Provided locally |
+| Titanic | Passenger records | Loaded with `seaborn.load_dataset("titanic")` |
 | Victor Hugo | `victor-hugo-texts.txt` (training corpus), `victor-hugo-titles.txt` (list of the 48 poem titles) | Provided locally |
-| Perceptron / Neural Network | Small toy datasets | Generated in the notebooks |
+| Neural Network | Iris flowers | Loaded with `sklearn.datasets.load_iris()` |
+| Perceptron | Small toy dataset | Generated in the notebook |
 
-Place the local files in the `data/` folder (or update the paths at the top of each notebook).
+Place the Victor Hugo files in the `data/` folder (or update the paths at the top of each notebook).
 
 ## Getting Started
 
@@ -79,7 +83,7 @@ Place the local files in the `data/` folder (or update the paths at the top of e
 
 - Python 3.9+
 - Jupyter Notebook or JupyterLab
-- numpy, pandas, matplotlib, scikit-learn
+- numpy, pandas, matplotlib, seaborn, scikit-learn, networkx
 - tensorflow / keras
 
 ### Installation
@@ -91,7 +95,7 @@ cd <your-repo-folder>
 python -m venv venv
 source venv/bin/activate        # Windows: venv\Scripts\activate
 
-pip install numpy pandas matplotlib scikit-learn tensorflow jupyter
+pip install numpy pandas matplotlib seaborn scikit-learn networkx tensorflow jupyter
 ```
 
 ### Run
@@ -137,7 +141,7 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.20, stratify=y, random_state=42
 )
 ```
-### Normalisation of data, [0, 1]
+### One-hot encoding of the labels
 
 ```
 from sklearn.preprocessing import OneHotEncoder
