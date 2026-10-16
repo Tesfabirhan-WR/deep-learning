@@ -51,8 +51,10 @@ Next-word prediction and text generation with a recurrent neural network, traine
 
 **How it works:**
 - **Preprocessing:** each non-empty line of the corpus is read, then tokenized with the Keras `Tokenizer` (vocabulary limited to 1000 words).
-- **Training examples:** a sliding window of the **3 previous words** is used to predict the next word, with zero padding at the start when fewer than 3 words are available (11,541 examples).
-- **Model:** `Embedding` (16 dimensions) → `SimpleRNN` (32 units) → `Dense` (1000, softmax), trained with sparse categorical cross-entropy and Adam. `EarlyStopping` on the loss (patience 10) stops training automatically.
+- **Train / validation / test split:** 80 % / 10 % / 10 %, split by **lines** (not by windows) so that overlapping windows from the same line never end up in different sets.
+- **Training examples:** a sliding window of the **3 previous words** is used to predict the next word, with zero padding at the start when fewer than 3 words are available.
+- **Model:** `Embedding` (16 dimensions) → `SimpleRNN` (32 units) → `Dense` (1000, softmax), trained with sparse categorical cross-entropy and Adam. `EarlyStopping` on the **validation loss** (patience 5) stops training and restores the best weights.
+- **Evaluation:** Top-1 and Top-5 accuracy on train, validation and test sets, compared with a "most frequent word" baseline, plus a confusion matrix and a classification report on the test set.
 - **Generation:** starting from a seed word, the model predicts a probability distribution over the next word and samples from it, one word at a time. A `temperature` parameter controls the result (lower = safer and more repetitive, higher = more varied).
 
 **Concepts:** tokenization, word embeddings, sliding windows, recurrent neural networks, softmax sampling, temperature.
@@ -83,8 +85,8 @@ Place the local files in the `data/` folder (or update the paths at the top of e
 ### Installation
 
 ```bash
-git clone https://github.com/Tesfabirhan-WR/deep-learning
-cd projects/deep-learning
+git clone <your-repo-url>
+cd <your-repo-folder>
 
 python -m venv venv
 source venv/bin/activate        # Windows: venv\Scripts\activate
@@ -113,6 +115,37 @@ Common utilities imported by the notebooks, so the code is not duplicated:
 
 ```python
 from libs import *
+```
+### Example of loading dataset
+
+```
+(x_train, y_train), (x_test, y_test) = tf.keras.datasets.fashion_mnist.load_data()
+print(x_train.shape, y_train.shape)
+```
+
+
+### Data Classification -example
+
+```
+features = ["pclass", "sex", "age", "sibsp", "parch", "fare", "embarked"]
+X = titanic[features]
+y = titanic["survived"].values
+
+-----
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.20, stratify=y, random_state=42
+)
+```
+### Normalisation of data, [0, 1]
+
+```
+from sklearn.preprocessing import OneHotEncoder
+
+encoder = OneHotEncoder(sparse_output=False)
+y_train = encoder.fit_transform(y_train.reshape(-1, 1))
+y_test = encoder.transform(y_test.reshape(-1, 1))
+print("Sortie encodées :\n", y_train[:5])
 ```
 
 ## What I Learned
